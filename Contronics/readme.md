@@ -5,3 +5,7 @@
     - will you know that the message was not received? 
     - did you implement any acknowledge method? 
 2. What happens if BrokerService is down?
+
+### branchname: poc/2_distributed tracing
+
+### outbox pattern
