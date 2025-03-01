@@ -9,10 +9,11 @@
 ### branchname: poc/2_no_tracing
 1. How can you monitor a request ? 
 
-### branchname: poc_3_distributed_tracing
-1. Are you using any tooling for monitoring the app
-2. How do you handle failures? Example of docker setup
+### branchname: poc/3_distributed_tracing
+1. Are you using any tooling for monitoring the app?
+
 
 ### branchname: poc_4_message_broker
+2. How do you handle failures? Example of docker setup
 
 ### outbox pattern
