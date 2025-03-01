@@ -1,0 +1,69 @@
+# Ignore Visual Studio specific files
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore build output at any level
+**/bin/
+**/obj/
+**/out/
+TestResults/
+coverage/
+
+# Ignore Rider and JetBrains Rider specific files
+.idea/
+*.sln.iml
+
+# Ignore dependencies
+**/node_modules/
+**/packages/
+**/wwwroot/lib/
+!.nuget/packages.config
+
+# Ignore NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+project.assets.json
+nuget.lock.json
+NuGet.Config
+global.json
+nuget/packages/
+.nuget/
+
+# Ignore Entity Framework migrations
+**/Migrations/
+**/EFCoreMigrations/
+
+# Ignore secrets and user settings
+**/secrets.json
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.json
+
+# Ignore logs and runtime files
+*.log
+logs/
+log/
+error.log
+**/Dockerfile
+**/docker-compose*
+**/.dockerignore
+**/docker-compose.override.yml
+
+# Ignore Resharper and Rider settings
+*.DotSettings.user
+
+# Ignore temporary files
+*~ 
+*.cache
+*.bak
+Thumbs.db
+Desktop.ini
+
+# Ignore Publish Output
+**/publish/
+**/wwwroot/dist/
