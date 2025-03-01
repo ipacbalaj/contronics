@@ -1,44 +1,42 @@
-var builder = WebApplication.CreateBuilder(args);
+using System.Net.Http;
+using System.Net.Http.Json;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 var app = builder.Build();
+app.UseSwagger();
+app.UseSwaggerUI();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
+app.MapPost("/api/forward-sensor-data", async (HttpContext context, HttpClient httpClient, SensorData data) =>
     {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
+        // Define the existing sensor data API endpoint
+        var sensorDataApiUrl = "http://localhost:5244/api/sensor-data"; // Replace with actual URL
+
+        if (string.IsNullOrEmpty(data.SensorId) || data.Timestamp == default)
+        {
+            return Results.BadRequest("Invalid sensor data.");
+        }
+
+        // Send HTTP POST request to the existing API
+        var response = await httpClient.PostAsJsonAsync(sensorDataApiUrl, data);
+
+        if (response.IsSuccessStatusCode)
+        {
+            return Results.Ok(new { Status = "Sensor data forwarded successfully" });
+        }
+
+        return Results.StatusCode((int)response.StatusCode);
     })
-    .WithName("GetWeatherForecast")
+    .WithName("ForwardSensorData")
     .WithOpenApi();
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+public class SensorData
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public string SensorId { get; set; } = string.Empty;
+    public double Value { get; set; }
+    public DateTime Timestamp { get; set; }
 }

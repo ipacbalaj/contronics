@@ -6,6 +6,6 @@
     - did you implement any acknowledge method? 
 2. What happens if BrokerService is down?
 
-### branchname: poc/2_distributed tracing
+### branchname: poc/2_no_tracing
 
 ### outbox pattern
