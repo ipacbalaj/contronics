@@ -1,4 +1,5 @@
 using BrokerService;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.SignalR;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -48,6 +49,22 @@ app.UseSwaggerUI();
 // app.UseHttpsRedirection();
 app.MapHub<SensorDataHub>("/sensorDataHub");
 
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+        if (exceptionHandlerPathFeature?.Error is not null)
+        {
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError(exceptionHandlerPathFeature.Error, "Unhandled exception occurred.");
+        }
+
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsJsonAsync(new { Error = "An internal server error occurred." });
+    });
+});
+
 app.MapPost("/api/sensor-data", async (SensorData data, IHubContext<SensorDataHub> hubContext, ILogger<Program> logger) =>
     {
         logger.LogInformation("Received sensor data: {SensorId}, {Value}, {Timestamp}", data.SensorId, data.Value, data.Timestamp);
@@ -64,6 +81,19 @@ app.MapPost("/api/sensor-data", async (SensorData data, IHubContext<SensorDataHu
         return Results.Ok(new { Status = "Sensor data received" });
     })
     .WithName("ReceiveSensorData")
+    .WithOpenApi();
+
+
+app.MapPost("/api/sensor-data-error", async (SensorData data, ILogger<Program> logger) =>
+    {
+        logger.LogInformation("Received sensor data: {SensorId}, {Value}, {Timestamp}", data.SensorId, data.Value, data.Timestamp);
+        logger.LogWarning("This is a warning message before throwing an exception.");
+
+        // Simulate an exception
+        throw new InvalidOperationException("Simulated sensor data processing error.");
+
+    })
+    .WithName("ReceiveSensorDataError")
     .WithOpenApi();
 
 app.Run();

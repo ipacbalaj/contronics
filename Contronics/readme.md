@@ -19,6 +19,9 @@
 ### branchname: poc/5_logging_seq
 1. What is the benefit of using a tool like seq?
 
+### branchname: poc/5_logging_seq_exception
+
+
 
 ### branchname: poc_4_message_broker
 2. How can 
