@@ -6,6 +6,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Enrichers.OpenTelemetry;
+using Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
