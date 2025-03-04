@@ -1,4 +1,5 @@
 using BrokerService;
+using MassTransit;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.SignalR;
 using OpenTelemetry.Resources;
@@ -40,7 +41,32 @@ builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
         });
 });
 
+try
+{
+    builder.Services.AddMassTransit(x =>
+    {
+        x.UsingRabbitMq((context, cfg) =>
+        {
+            var configuration = context.GetRequiredService<IConfiguration>();
 
+            // Set up the RabbitMQ host using settings from configuration
+            cfg.Host(configuration["RabbitMQ:HostName"], "/", h =>
+            {
+                h.Username(configuration["RabbitMQ:UserName"]);
+                h.Password(configuration["RabbitMQ:Password"]);
+            });
+
+            // Option 1: Automatically configure endpoints for registered consumers
+            cfg.ConfigureEndpoints(context);
+             
+        });
+    });
+}
+catch (Exception e)
+{
+    Console.WriteLine(e);
+    throw;
+}
 
 var app = builder.Build();
 
@@ -95,5 +121,29 @@ app.MapPost("/api/sensor-data-error", async (SensorData data, ILogger<Program> l
     })
     .WithName("ReceiveSensorDataError")
     .WithOpenApi();
+
+
+app.MapPost("/api/queue-demo/sensor-data", async (SensorData data, 
+        IHubContext<SensorDataHub> hubContext, 
+        ILogger<Program> logger,
+        IPublishEndpoint publishEndpoint) =>
+    {
+        logger.LogInformation("Received sensor data: {SensorId}, {Value}, {Timestamp}", 
+            data.SensorId, data.Value, data.Timestamp);
+        if (string.IsNullOrEmpty(data.SensorId) || data.Timestamp == default)
+        {
+            return Results.BadRequest("Invalid sensor data.");
+        }
+
+        // Publish sensor data to RabbitMQ queue
+        var sensorMessage = new SensorDataMessage(data.SensorId, data.Value, data.Timestamp);
+        await publishEndpoint.Publish(sensorMessage);
+
+        logger.LogInformation("Published sensor data to RabbitMQ queue.");
+        return Results.Ok(new { Status = "Sensor data received" });
+    })
+    .WithName("ReceiveSensorDataQueue")
+    .WithOpenApi();
+
 
 app.Run();
