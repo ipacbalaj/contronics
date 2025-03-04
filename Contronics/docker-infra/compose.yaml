@@ -37,5 +37,18 @@ services:
       COLLECTOR_ZIPKIN_HTTP_PORT: "9411" # Optional: Enables Zipkin endpoint
     restart: always
 
+
+  seq:
+    image: datalust/seq:latest
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5341:80" # Seq UI
+      - "5342:5342" # Seq ingestion API
+    volumes:
+      - seq-data:/data
+
 volumes:
   mssql-data:
+  seq-data:
