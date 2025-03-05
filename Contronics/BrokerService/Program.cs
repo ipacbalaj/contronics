@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BrokerService;
 using MassTransit;
 using Microsoft.AspNetCore.Diagnostics;
@@ -14,7 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
-
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information() // Logs info, warning, and errors
@@ -35,6 +35,7 @@ builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
         .AddAspNetCoreInstrumentation() // Automatically trace incoming HTTP requests
         .AddHttpClientInstrumentation() // Automatically trace outgoing HTTP requests
         .AddSource("BrokerServiceActivitySource") // Add custom ActivitySource
+        .AddSource("MassTransit") // MassTransit ActivitySource
         .AddOtlpExporter(options =>
         {
             options.Endpoint = new Uri("http://localhost:4317");
@@ -131,12 +132,17 @@ app.MapPost("/api/queue-demo/sensor-data", async (SensorData data,
     {
         logger.LogInformation("Received sensor data: {SensorId}, {Value}, {Timestamp}", 
             data.SensorId, data.Value, data.Timestamp);
+        
+
         if (string.IsNullOrEmpty(data.SensorId) || data.Timestamp == default)
         {
             return Results.BadRequest("Invalid sensor data.");
         }
 
-        // Publish sensor data to RabbitMQ queue
+        // using var activity = new ActivitySource("MassTransit").StartActivity("PublishingMessage", ActivityKind.Producer, Activity.Current?.Context ?? default);
+        // activity?.SetTag("messaging.system", "rabbitmq");
+        // activity?.SetTag("messaging.destination", "sensor-data-queue");
+
         var sensorMessage = new SensorDataMessage(data.SensorId, data.Value, data.Timestamp);
         await publishEndpoint.Publish(sensorMessage);
 

@@ -21,10 +21,8 @@
 
 ### branchname: poc/5_logging_seq_exception
 
-
-
-### branchname: poc_4_message_broker
-2. How can 
+### branchname: poc/6_add_message_broker
+1. What are the benefits of a message broker?
 
 ### outbox pattern
 

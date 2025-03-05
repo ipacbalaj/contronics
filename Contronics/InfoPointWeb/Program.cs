@@ -1,10 +1,38 @@
 using InfoPointWeb;
 using MassTransit;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Enrichers.OpenTelemetry;
 
 var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information() // Logs info, warning, and errors
+    .Enrich.FromLogContext()
+    .Enrich.WithOpenTelemetrySpanId() 
+    .Enrich.WithOpenTelemetryTraceId() // Adds TraceId and SpanId to logs
+    .WriteTo.Console()
+    .WriteTo.Seq("http://localhost:5341")
+    .CreateLogger();
+builder.Host.UseSerilog();
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
+{
+    tracerProviderBuilder
+        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+            serviceName: "InfoPointWeb",
+            serviceVersion: "1.0.0"))
+        .AddAspNetCoreInstrumentation() // Automatically trace incoming HTTP requests
+        .AddHttpClientInstrumentation() // Automatically trace outgoing HTTP requests
+        .AddSource("InfoPoint   ActivitySource") // Add custom ActivitySource
+        .AddSource("MassTransit") // MassTransit ActivitySource
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri("http://localhost:4317");
+            options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+        });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMassTransit(x =>
