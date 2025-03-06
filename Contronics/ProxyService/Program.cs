@@ -74,6 +74,30 @@ app.MapPost("/api/forward-sensor-data-queue", async (HttpContext context, HttpCl
     .WithName("ForwardSensorDataQueue")
     .WithOpenApi();
 
+
+app.MapPost("/api/forward-sensor-error", async (HttpContext context, HttpClient httpClient, SensorData data) =>
+    {
+        // Define the existing sensor data API endpoint
+        var sensorDataApiUrl = "http://localhost:5244/api/sensor-data-error"; // Replace with actual URL
+        await Task.Delay(1500);
+        if (string.IsNullOrEmpty(data.SensorId) || data.Timestamp == default)
+        {
+            return Results.BadRequest("Invalid sensor data.");
+        }
+
+        // Send HTTP POST request to the existing API
+        var response = await httpClient.PostAsJsonAsync(sensorDataApiUrl, data);
+
+        if (response.IsSuccessStatusCode)
+        {
+            return Results.Ok(new { Status = "Sensor data forwarded successfully" });
+        }
+
+        return Results.StatusCode((int)response.StatusCode);
+    })
+    .WithName("ForwardSensorDataError")
+    .WithOpenApi();
+
 app.Run();
 
 public class SensorData

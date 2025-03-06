@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    container_name: timescaledb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword  # Change this to your own password
+      POSTGRES_DB: mydatabase  # Default database name
+    ports:
+      - "5432:5432"  # Mapping PostgreSQL's port to the host
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+    networks:
+      - timescale_network
+
+volumes:
+  timescaledb_data:
+
+networks:
+  timescale_network:
+    driver: bridge
